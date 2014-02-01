@@ -99,7 +99,15 @@ void MainLoop::run(GLFWwindow* window)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		shader->use();
-		glUniformMatrix4fv(shader->uniform("tMat"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1)));
+
+		//glm::mat4 model = glm::scale(glm::mat4(1), glm::vec3(0.5));
+		glm::mat4 model(1);
+		glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3 ), glm::vec3(0,0,0), glm::vec3(0,1,0));
+
+		//glm::mat4 proj = glm::ortho(-ratio * 5, ratio * 5, -5.0f, 5.0f, -5.0f, 5.0f);
+		glm::mat4 proj = glm::perspective(90.0f, (float)width/height, 0.2f, 10.0f);
+
+		glUniformMatrix4fv(shader->uniform("tMat"), 1, GL_FALSE, glm::value_ptr(proj * view * model));
 		glBindVertexArray(vaoID[0]);
 		glDrawArrays(GL_TRIANGLES, 0, faceCount * 3 );
 		glBindVertexArray(0);
