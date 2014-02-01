@@ -8,15 +8,36 @@
 
 #include <GL/glew.h>
 #include "MainLoop.h"
-#include "glm/gtc/matrix_transform.hpp"
+#include "glm.h"
 #include <lib3ds/file.h>
 #include <lib3ds/mesh.h>
 #include <cstdio>
 #include <string.h>
+#include "Shader/ShaderProgram.hpp"
 uint32_t faceCount = 0;
+
+
+GLuint vaoID[1];
+ShaderProgram* shader = NULL;
 
 MainLoop::MainLoop()
 {
+	Shader vertexShader(GL_VERTEX_SHADER);
+	vertexShader.loadFromFile("Shaders/simple.vert");
+	vertexShader.compile();
+
+
+	Shader fragmentShader(GL_FRAGMENT_SHADER);
+	fragmentShader.loadFromFile("Shaders/simple.frag");
+	fragmentShader.compile();
+
+	shader = new ShaderProgram();
+	shader->attachShader(vertexShader);
+	shader->attachShader(fragmentShader);
+	shader->linkProgram();
+	shader->addAttribute("inPos");
+	shader->addUniform("tMat");
+
 	Lib3dsFile* car = lib3ds_file_load("models/monkey.3ds");
 
 	if(car != NULL)
@@ -44,10 +65,20 @@ MainLoop::MainLoop()
 			}
 		}
 
-		GLuint buffer;
-		glGenBuffers(1, &buffer);
-		glBindBuffer(GL_ARRAY_BUFFER, buffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Lib3dsVector)*3*faceCount, vertices, GL_STATIC_DRAW);
+
+
+		glGenVertexArrays(1,&vaoID[0]);
+
+		glBindVertexArray(vaoID[0]);
+		{
+			GLuint buffer;
+			glGenBuffers(1, &buffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(Lib3dsVector)*3*faceCount, vertices, GL_STATIC_DRAW);
+			glVertexAttribPointer(shader->attribute("inPos"), 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(shader->attribute("inPos"));
+		}
+		glBindVertexArray(0);
 
 		delete vertices;
 		delete normals;
@@ -62,35 +93,17 @@ void MainLoop::run(GLFWwindow* window)
 {
 	while (!glfwWindowShouldClose(window))
 	{
-		float ratio;
 		int width, height;
 		glfwGetFramebufferSize(window, &width, &height);
-		ratio = width / (float) height;
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		//	glm::mat4 orthoMat = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-		glm::mat4 orthoMat = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 5.0f);
-		glLoadMatrixf(&orthoMat[0][0]);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
-		glBegin(GL_TRIANGLES);
-		glColor3f(1.f, 0.f, 0.f);
-		glVertex3f(-0.6f, -0.4f, 0.f);
-		glColor3f(0.f, 1.f, 0.f);
-		glVertex3f(0.6f, -0.4f, 0.f);
-		glColor3f(0.f, 0.f, 1.f);
-		glVertex3f(0.f, 0.6f, 0.f);
-		glEnd();
 
+		shader->use();
+		glUniformMatrix4fv(shader->uniform("tMat"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1)));
+		glBindVertexArray(vaoID[0]);
+		glDrawArrays(GL_TRIANGLES, 0, faceCount * 3 );
+		glBindVertexArray(0);
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glBindBuffer(GL_ARRAY_BUFFER, 1);
-		glVertexPointer(3, GL_FLOAT, 0, NULL);
-		glDrawArrays(GL_TRIANGLES, 0, faceCount* 3);
-		glDisableClientState(GL_VERTEX_ARRAY);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -99,6 +112,7 @@ void MainLoop::run(GLFWwindow* window)
 
 MainLoop::~MainLoop()
 {
-	// TODO Auto-generated destructor stub
+	if(shader)
+		delete shader;
 }
 

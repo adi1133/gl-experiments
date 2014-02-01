@@ -8,6 +8,7 @@
 #include "RenderContext.h"
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
+#include <GL/gl.h>
 #include <cstdio>
 #include <cstdlib>
 #include "MainLoop.h"
@@ -35,6 +36,14 @@ bool RenderContext::init() {
 		return false;
 	}
 
+	bool opengl3core = true;
+	if(opengl3core)
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	}
 	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
 	if(window == NULL)
 	{
@@ -43,6 +52,11 @@ bool RenderContext::init() {
 	}
 	glfwSetErrorCallback(error_callback);
 	glfwMakeContextCurrent(window);
+	printf("%s\n", glGetString(GL_VERSION));
+
+	glewExperimental = true;
+	//http://www.opengl.org/wiki/OpenGL_Loading_Library
+	//http://stackoverflow.com/questions/8302625
 	if (GLEW_OK != glewInit())
 	{
 		printf("glewInit() failed\n");
