@@ -10,13 +10,13 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <cstdlib>
-
+#include <glm/gtc/matrix_transform.hpp>
 RenderContext::RenderContext() {
 	// TODO Auto-generated constructor stub
 
 }
 
-GLFWwindow* windowz = NULL;
+GLFWwindow* window = NULL;
 
 void mainLoop();
 
@@ -38,14 +38,14 @@ bool RenderContext::init() {
 		return false;
 	}
 
-	windowz = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-	if(windowz == NULL)
+	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+	if(window == NULL)
 	{
 		printf("failed to create window\n");
 		return false;
 	}
 	glfwSetErrorCallback(error_callback);
-	glfwMakeContextCurrent(windowz);
+	glfwMakeContextCurrent(window);
 	if (GLEW_OK != glewInit())
 	{
 		printf("glewInit() failed\n");
@@ -58,17 +58,19 @@ bool RenderContext::init() {
 
 void mainLoop()
 {
-	while (!glfwWindowShouldClose(windowz))
+	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
 		int width, height;
-		glfwGetFramebufferSize(windowz, &width, &height);
+		glfwGetFramebufferSize(window, &width, &height);
 		ratio = width / (float) height;
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+		glm::mat4 orthoMat = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+		glLoadMatrixf(&orthoMat[0][0]);
+		//glOrtho();
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
@@ -80,7 +82,7 @@ void mainLoop()
 		glColor3f(0.f, 0.f, 1.f);
 		glVertex3f(0.f, 0.6f, 0.f);
 		glEnd();
-		glfwSwapBuffers(windowz);
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 }
@@ -89,7 +91,7 @@ void mainLoop()
 
 RenderContext::~RenderContext() {
 	glfwTerminate();
-	if(windowz)
-		glfwDestroyWindow(windowz);
+	if(window)
+		glfwDestroyWindow(window);
 }
 
