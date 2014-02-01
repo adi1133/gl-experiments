@@ -10,15 +10,12 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <cstdlib>
-#include <glm/gtc/matrix_transform.hpp>
+#include "MainLoop.h"
 RenderContext::RenderContext() {
-	// TODO Auto-generated constructor stub
-
 }
 
 GLFWwindow* window = NULL;
 
-void mainLoop();
 
 static void error_callback(int error, const char* description)
 {
@@ -51,40 +48,12 @@ bool RenderContext::init() {
 		printf("glewInit() failed\n");
 		return false;
 	}
-	mainLoop();
+
+	MainLoop mainLoop;
+	mainLoop.run(window);
+
 	printf("all ok\n");
 	return true;
-}
-
-void mainLoop()
-{
-	while (!glfwWindowShouldClose(window))
-	{
-		float ratio;
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
-		ratio = width / (float) height;
-		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glm::mat4 orthoMat = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-		glLoadMatrixf(&orthoMat[0][0]);
-		//glOrtho();
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
-		glBegin(GL_TRIANGLES);
-		glColor3f(1.f, 0.f, 0.f);
-		glVertex3f(-0.6f, -0.4f, 0.f);
-		glColor3f(0.f, 1.f, 0.f);
-		glVertex3f(0.6f, -0.4f, 0.f);
-		glColor3f(0.f, 0.f, 1.f);
-		glVertex3f(0.f, 0.6f, 0.f);
-		glEnd();
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
 }
 
 
