@@ -1,11 +1,14 @@
 #version 140
  
-precision highp float; // needed only for version 1.30
+///precision highp float; // needed only for version 1.30
  
 
-out vec4 out_Color;
- 
+out vec3 outColor;
+
+in vec3 outNormal;
+in vec3 outNormal2;
 void main(void)
 {
-        out_Color = vec4(0.5,0,1,0);
+    outColor = vec3(0.5, 0 ,1);
+	outColor = outNormal + outNormal2;
 }

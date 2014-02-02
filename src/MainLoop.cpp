@@ -18,27 +18,40 @@ uint32_t faceCount = 0;
 
 
 GLuint vaoID[1];
-ShaderProgram* shader = NULL;
+ShaderProgram shader;
 
-MainLoop::MainLoop()
+int scrollPos = 0;
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	Shader vertexShader(GL_VERTEX_SHADER);
-	vertexShader.loadFromFile("Shaders/simple.vert");
-	vertexShader.compile();
+	if( (key == GLFW_KEY_Q || key == GLFW_KEY_ESCAPE) && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	scrollPos+= yoffset;
+}
+
+MainLoop::MainLoop(GLFWwindow* window) : window(window)
+{
+
+	glfwSetKeyCallback(window, keyCallback);
+	glfwSetScrollCallback(window, scrollCallback);
+	Shader vertexShader;
+	vertexShader.loadFromFile(GL_VERTEX_SHADER, "Shaders/simple.vert");
 
 
-	Shader fragmentShader(GL_FRAGMENT_SHADER);
-	fragmentShader.loadFromFile("Shaders/simple.frag");
-	fragmentShader.compile();
+	Shader fragmentShader;
+	fragmentShader.loadFromFile(GL_FRAGMENT_SHADER, "Shaders/simple.frag");
 
-	shader = new ShaderProgram();
-	shader->attachShader(vertexShader);
-	shader->attachShader(fragmentShader);
-	shader->linkProgram();
-	shader->addAttribute("inPos");
-	shader->addUniform("tMat");
 
-	Lib3dsFile* car = lib3ds_file_load("models/monkey.3ds");
+	shader.attachShader(vertexShader);
+	shader.attachShader(fragmentShader);
+	shader.linkProgram();
+
+
+	Lib3dsFile* car = lib3ds_file_load("models/car.3ds");
 
 	if(car != NULL)
 	{
@@ -71,43 +84,56 @@ MainLoop::MainLoop()
 
 		glBindVertexArray(vaoID[0]);
 		{
-			GLuint buffer;
-			glGenBuffers(1, &buffer);
-			glBindBuffer(GL_ARRAY_BUFFER, buffer);
+			GLuint buffer[2];
+			glGenBuffers(2, buffer);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(Lib3dsVector)*3*faceCount, vertices, GL_STATIC_DRAW);
-			glVertexAttribPointer(shader->attribute("inPos"), 3, GL_FLOAT, GL_FALSE, 0, 0);
-			glEnableVertexAttribArray(shader->attribute("inPos"));
+			glVertexAttribPointer(shader.attribute("inPos"), 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(shader.attribute("inPos"));
+
+			glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(Lib3dsVector)*3*faceCount, normals, GL_STATIC_DRAW);
+			glVertexAttribPointer(shader.attribute("inNormal"), 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(shader.attribute("inNormal"));
 		}
 		glBindVertexArray(0);
 
 		delete vertices;
 		delete normals;
 		printf("yay");
+
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
 	}
 	else
 		printf("nay");
 
 }
 
-void MainLoop::run(GLFWwindow* window)
+
+
+
+void MainLoop::run()
 {
 	while (!glfwWindowShouldClose(window))
 	{
 		int width, height;
 		glfwGetFramebufferSize(window, &width, &height);
 		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shader->use();
+		shader.use();
 
 		//glm::mat4 model = glm::scale(glm::mat4(1), glm::vec3(0.5));
 		glm::mat4 model(1);
-		glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3 ), glm::vec3(0,0,0), glm::vec3(0,1,0));
+		//model = glm::scale(model, glm::vec3(zoom));
+		model = glm::scale(model, glm::vec3(0.0005,0.0005,0.0005));
+		glm::mat4 view = glm::lookAt(glm::vec3(1, 0, scrollPos * 0.1 ), glm::vec3(0,0,0), glm::vec3(0,1,0));
 
 		//glm::mat4 proj = glm::ortho(-ratio * 5, ratio * 5, -5.0f, 5.0f, -5.0f, 5.0f);
-		glm::mat4 proj = glm::perspective(90.0f, (float)width/height, 0.2f, 10.0f);
+		glm::mat4 proj = glm::perspective(90.0f, (float)width/height, 0.1f, 1000.0f);
 
-		glUniformMatrix4fv(shader->uniform("tMat"), 1, GL_FALSE, glm::value_ptr(proj * view * model));
+		glUniformMatrix4fv(shader.uniform("tMat"), 1, GL_FALSE, glm::value_ptr(proj * view * model));
 		glBindVertexArray(vaoID[0]);
 		glDrawArrays(GL_TRIANGLES, 0, faceCount * 3 );
 		glBindVertexArray(0);
@@ -120,7 +146,5 @@ void MainLoop::run(GLFWwindow* window)
 
 MainLoop::~MainLoop()
 {
-	if(shader)
-		delete shader;
 }
 

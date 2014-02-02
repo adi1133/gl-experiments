@@ -16,64 +16,67 @@ class Shader
 {
 private:
 	GLuint id;         // The unique ID / handle for the shader
-	string typeString; // String representation of the shader type (i.e. "Vertex" or such)
-	string source;     // The shader source code (i.e. the GLSL code itself)
 
 public:
-	Shader(const GLenum type){
-		// Get the type of the shader
-		if (type == GL_VERTEX_SHADER)
-		{
-			typeString = "Vertex";
-		}
-		else if (type == GL_FRAGMENT_SHADER)
-		{
-			typeString = "Fragment";
-		}
-		else
-		{
-			typeString = "Geometry";
-		}
 
-		// Create the vertex shader id / handle
-		// Note: If you segfault here you probably don't have a valid rendering context.
-		id = glCreateShader(type);
-	}
+	//prevent copy operators since the two instances get destroyed twice
+	Shader() : id(0){}
+	Shader(const Shader& src) = delete;
+	Shader & operator=(const Shader&) = delete;
 
-	GLuint getId()
+	GLuint getId() const
 	{
 		return id;
 	}
 
-	string getSource()
-	{
-		return source;
-	}
-
 	// Method to load the shader contents from a string
-	void loadFromString(const string sourceString)
+	bool loadFromString(const GLenum type, const string source)
 	{
-		// Keep hold of a copy of the source
-		source = sourceString;
-
-		// Get the source as a pointer to an array of characters
-		const char *sourceChars = source.c_str();
-
+		if(id)
+			return false;
+		id = glCreateShader(type);
 		// Associate the source with the shader id
-		glShaderSource(id, 1, &sourceChars, NULL);
+		const char* sourcePtr = source.c_str();
+		glShaderSource(id, 1, &sourcePtr, NULL);
+
+		// Compile the shader
+		glCompileShader(id);
+
+		// Check the compilation status and report any errors
+		GLint shaderStatus;
+		glGetShaderiv(id, GL_COMPILE_STATUS, &shaderStatus);
+
+
+		if(shaderStatus)
+		{
+			cout <<"shader compilation OK" << endl;
+		}
+		else
+		{
+			cout << "shader compilation failed"<< endl;
+		}
+
+		GLint length;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+		if(length)
+		{
+			GLchar strInfoLog[length];
+			glGetShaderInfoLog(id, length, NULL, strInfoLog);
+			cout << strInfoLog << endl;
+		}
+		return shaderStatus;
 	}
 
 	// Method to load the shader contents from a file
-	void loadFromFile(const string filename)
+	bool loadFromFile(const GLenum type, const string filename)
 	{
 		ifstream file;
-
 		file.open( filename.c_str() );
 
 		if (!file.good() )
 		{
 			cout << "Failed to open file: " << filename << endl;
-			exit(-1);
+			return false;
 		}
 
 		// Create a string stream
@@ -85,49 +88,19 @@ public:
 		// Close the file
 		file.close();
 
-		// Convert the StringStream into a string
-		source = stream.str();
-
-		// Get the source string as a pointer to an array of characters
-		const char *sourceChars = source.c_str();
-
-		// Associate the source with the shader id
-		glShaderSource(id, 1, &sourceChars, NULL);
-	}
-
-
-	// Method to compile a shader and display any problems if compilation fails
-	bool compile()
-	{
-		// Compile the shader
-		glCompileShader(id);
-
-		// Check the compilation status and report any errors
-		GLint shaderStatus;
-		glGetShaderiv(id, GL_COMPILE_STATUS, &shaderStatus);
-
-		// If the shader failed to compile, display the info log and quit out
-		if (shaderStatus == GL_FALSE)
+		bool status = loadFromString(type, stream.str());
+		if(!status)
 		{
-			GLint infoLogLength;
-			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-			GLchar *strInfoLog = new GLchar[infoLogLength + 1];
-			glGetShaderInfoLog(id, infoLogLength, NULL, strInfoLog);
-
-			cout << typeString << " shader compilation failed: " << strInfoLog << endl;
-			delete[] strInfoLog;
+			cout << "Error in file " << filename << endl;
 		}
-		else
-		{
-			cout << typeString << " shader compilation OK" << endl;
-		}
-		return shaderStatus == GL_TRUE;
+		return status;
+
 	}
 
 	virtual ~Shader()
 	{
-		 glDeleteShader(id);
+		if(id)
+			glDeleteShader(id);
 	}
 
 };

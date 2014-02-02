@@ -12,9 +12,11 @@
 class MainLoop
 {
 public:
-	MainLoop();
-	void run(GLFWwindow* window);
+	MainLoop(GLFWwindow* window);
+	void run();
 	virtual ~MainLoop();
+private:
+	GLFWwindow* window;
 };
 
 #endif /* MAINLOOP_H_ */

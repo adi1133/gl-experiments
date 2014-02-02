@@ -63,8 +63,8 @@ bool RenderContext::init() {
 		return false;
 	}
 
-	MainLoop mainLoop;
-	mainLoop.run(window);
+	MainLoop mainLoop(window);
+	mainLoop.run();
 
 	printf("all ok\n");
 	return true;
