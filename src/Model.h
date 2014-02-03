@@ -20,10 +20,12 @@ public:
 	void Draw();
 	virtual ~Model();
 private:
-	GLuint vao_id_;
-	GLuint vbo_id_;
-	GLuint ibo_id_;
 	uint32_t total_num_faces;
+	GLuint vao_id_;
+	GLuint vert_pos_id_;
+	GLuint vert_norm_id_;
+	GLuint ibo_id_;
+
 
 
 };

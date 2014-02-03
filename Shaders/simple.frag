@@ -8,5 +8,5 @@ out vec3 outColor;
 in vec3 outNormal;
 void main(void)
 {
-    outColor = vec3(0.5, 0 ,1);
+    outColor = outNormal;
 }
