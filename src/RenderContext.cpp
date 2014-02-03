@@ -73,8 +73,8 @@ bool RenderContext::init() {
 
 
 RenderContext::~RenderContext() {
-	glfwTerminate();
 	if(window)
 		glfwDestroyWindow(window);
+	glfwTerminate();
 }
 

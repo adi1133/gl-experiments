@@ -6,9 +6,7 @@
 out vec3 outColor;
 
 in vec3 outNormal;
-in vec3 outNormal2;
 void main(void)
 {
     outColor = vec3(0.5, 0 ,1);
-	outColor = outNormal + outNormal2;
 }

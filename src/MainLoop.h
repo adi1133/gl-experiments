@@ -9,6 +9,7 @@
 #define MAINLOOP_H_
 
 #include <GLFW/glfw3.h>
+#include "Model.h"
 class MainLoop
 {
 public:
@@ -17,6 +18,7 @@ public:
 	virtual ~MainLoop();
 private:
 	GLFWwindow* window;
+	Model monkey_;
 };
 
 #endif /* MAINLOOP_H_ */
