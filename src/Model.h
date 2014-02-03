@@ -22,6 +22,7 @@ public:
 private:
 	GLuint vao_id_;
 	GLuint vbo_id_;
+	GLuint ibo_id_;
 	uint32_t total_num_faces;
 
 
